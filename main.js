@@ -29,7 +29,7 @@ const eyeMaterial = new THREE.MeshBasicMaterial({
   transparent: true
 });
 
-const eyeGeometry = new THREE.PlaneGeometry(2.2, 2.2);
+const eyeGeometry = new THREE.PlaneGeometry(4, 4);
 const eye = new THREE.Mesh(eyeGeometry, eyeMaterial);
 scene.add(eye);
 

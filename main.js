@@ -33,12 +33,12 @@ const eyeGeometry = new THREE.PlaneGeometry(2.2, 2.2);
 const eye = new THREE.Mesh(eyeGeometry, eyeMaterial);
 scene.add(eye);
 
-// GLOW SUAVE
-const glowGeometry = new THREE.PlaneGeometry(3.0, 3.0);
+// GLOW CIRCULAR SUAVE
+const glowGeometry = new THREE.CircleGeometry(1.4, 64);
 const glowMaterial = new THREE.MeshBasicMaterial({
   color: 0x88aaff,
   transparent: true,
-  opacity: 0.10,
+  opacity: 0.08,
   depthWrite: false
 });
 const glow = new THREE.Mesh(glowGeometry, glowMaterial);
@@ -77,23 +77,27 @@ scene.add(stars);
 // CONTROLE
 const input = { x: 0, y: 0 };
 
-// mouse
+// MOUSE
 window.addEventListener('mousemove', (event) => {
   input.x = (event.clientX / window.innerWidth) * 2 - 1;
   input.y = -(event.clientY / window.innerHeight) * 2 + 1;
 });
 
-// touch
-window.addEventListener('touchmove', (event) => {
-  const touch = event.touches[0];
-  if (!touch) return;
+// TOUCH
+window.addEventListener(
+  'touchmove',
+  (event) => {
+    const touch = event.touches[0];
+    if (!touch) return;
 
-  input.x = (touch.clientX / window.innerWidth) * 2 - 1;
-  input.y = -(touch.clientY / window.innerHeight) * 2 + 1;
-}, { passive: true });
+    input.x = (touch.clientX / window.innerWidth) * 2 - 1;
+    input.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+  },
+  { passive: true }
+);
 
 // ANIMAÇÃO
-const ease = 0.05;
+const ease = 0.12;
 
 let targetX = 0;
 let targetY = 0;
@@ -102,20 +106,24 @@ let targetRot = 0;
 function animate(time) {
   const t = time * 0.001;
 
-  targetX = input.x * 0.35;
-  targetY = input.y * 0.2;
-  targetRot = input.x * 0.15;
+  // resposta mais forte
+  targetX = input.x * 0.75;
+  targetY = input.y * 0.45;
+  targetRot = input.x * 0.35;
 
   eye.position.x += (targetX - eye.position.x) * ease;
   eye.position.y += (targetY - eye.position.y) * ease;
   eye.rotation.z += (targetRot - eye.rotation.z) * ease;
 
+  // movimento autônomo sutil
+  eye.rotation.z += 0.0015;
+
   glow.position.x = eye.position.x;
   glow.position.y = eye.position.y;
   glow.rotation.z = eye.rotation.z;
-  glow.scale.x = 1 + Math.sin(t * 1.2) * 0.03;
-  glow.scale.y = 1 + Math.sin(t * 1.2) * 0.03;
-  glow.material.opacity = 0.09 + Math.sin(t * 1.4) * 0.02;
+  glow.scale.x = 1 + Math.sin(t * 1.2) * 0.04;
+  glow.scale.y = 1 + Math.sin(t * 1.2) * 0.04;
+  glow.material.opacity = 0.07 + Math.sin(t * 1.4) * 0.02;
 
   stars.rotation.y += 0.0004;
   stars.rotation.x += 0.00015;

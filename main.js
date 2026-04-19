@@ -2,7 +2,7 @@ document.body.style.margin = '0';
 document.body.style.background = '#111';
 
 const img = document.createElement('img');
-img.src = './logo.png';
+img.src = './olho.png';
 img.style.width = '300px';
 img.style.position = 'fixed';
 img.style.left = '50%';

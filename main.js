@@ -1,9 +1,10 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.158/build/three.module.js';
 
-// CENA
+// ======================
+// CENA / CÂMERA / RENDER
+// ======================
 const scene = new THREE.Scene();
 
-// CÂMERA
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
@@ -12,41 +13,52 @@ const camera = new THREE.PerspectiveCamera(
 );
 camera.position.z = 5;
 
-// RENDER
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-renderer.setClearColor(0x06080d);
+renderer.setClearColor(0x04060b);
 document.body.appendChild(renderer.domElement);
 
 // ======================
 // LOGO CENTRAL
 // ======================
 const textureLoader = new THREE.TextureLoader();
-const logoTexture = textureLoader.load('./olho.png');
+const logoTexture = textureLoader.load('./logo.png');
+
+const logoGroup = new THREE.Group();
+scene.add(logoGroup);
+
+const glowGeometry = new THREE.PlaneGeometry(3.0, 3.0);
+const glowMaterial = new THREE.MeshBasicMaterial({
+  color: 0x88aaff,
+  transparent: true,
+  opacity: 0.14,
+  depthWrite: false
+});
+const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+glow.position.z = -0.05;
+logoGroup.add(glow);
 
 const logoMaterial = new THREE.MeshBasicMaterial({
   map: logoTexture,
   transparent: true
 });
-
 const logoGeometry = new THREE.PlaneGeometry(2.2, 2.2);
 const logo = new THREE.Mesh(logoGeometry, logoMaterial);
-scene.add(logo);
+logoGroup.add(logo);
 
 // ======================
-// CAMPO DE ESTRELAS
+// ESTRELAS
 // ======================
-const starCount = 800;
+const starCount = 1400;
 const starGeometry = new THREE.BufferGeometry();
 const starPositions = new Float32Array(starCount * 3);
 
 for (let i = 0; i < starCount; i++) {
   const i3 = i * 3;
-
-  starPositions[i3] = (Math.random() - 0.5) * 20;      // x
-  starPositions[i3 + 1] = (Math.random() - 0.5) * 12;  // y
-  starPositions[i3 + 2] = (Math.random() - 0.5) * 10;  // z
+  starPositions[i3] = (Math.random() - 0.5) * 28;
+  starPositions[i3 + 1] = (Math.random() - 0.5) * 18;
+  starPositions[i3 + 2] = -Math.random() * 18;
 }
 
 starGeometry.setAttribute(
@@ -56,71 +68,91 @@ starGeometry.setAttribute(
 
 const starMaterial = new THREE.PointsMaterial({
   color: 0xffffff,
-  size: 0.035,
-  sizeAttenuation: true
+  size: 0.045,
+  transparent: true,
+  opacity: 0.85,
+  sizeAttenuation: true,
+  depthWrite: false
 });
 
 const stars = new THREE.Points(starGeometry, starMaterial);
 scene.add(stars);
 
 // ======================
-// MOUSE
+// CONTROLES
 // ======================
-const mouse = {
-  x: 0,
-  y: 0
+const input = {
+  x: 0, // -1 a 1
+  y: 0  // -1 a 1
 };
 
+// fallback desktop
 window.addEventListener('mousemove', (event) => {
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  input.x = (event.clientX / window.innerWidth) * 2 - 1;
+  input.y = -(event.clientY / window.innerHeight) * 2 + 1;
 });
 
+// mobile orientation
+function handleOrientation(event) {
+  // beta: frente/trás, gamma: esquerda/direita
+  const beta = event.beta ?? 0;
+  const gamma = event.gamma ?? 0;
+
+  // limitar para controle suave
+  const clampedGamma = Math.max(-30, Math.min(30, gamma));
+  const clampedBeta = Math.max(-30, Math.min(30, beta));
+
+  input.x = clampedGamma / 30;
+  input.y = -(clampedBeta / 30);
+}
+
+function enableOrientationListener() {
+  window.addEventListener('deviceorientation', handleOrientation, true);
+}
+
+async function requestSensorPermissionIfNeeded() {
+  const button = document.getElementById('startSensors');
+
+  try {
+    if (
+      typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function'
+    ) {
+      const result = await DeviceOrientationEvent.requestPermission();
+      if (result === 'granted') {
+        enableOrientationListener();
+        button.style.display = 'none';
+      } else {
+        button.textContent = 'Permissão negada';
+      }
+    } else {
+      enableOrientationListener();
+      button.style.display = 'none';
+    }
+  } catch (err) {
+    console.error('Erro ao ativar sensores:', err);
+    button.textContent = 'Erro ao ativar';
+  }
+}
+
+document
+  .getElementById('startSensors')
+  .addEventListener('click', requestSensorPermissionIfNeeded);
+
 // ======================
-// PARÂMETROS
+// ANIMAÇÃO
 // ======================
-const ease = 0.05;
+const ease = 0.06;
 
 let logoTargetX = 0;
 let logoTargetY = 0;
 let logoTargetRotation = 0;
 let logoTargetScale = 1;
 
-// ======================
-// ANIMAÇÃO
-// ======================
-function animate() {
-  // Logo responde ao mouse
-  logoTargetX = mouse.x * 0.35;
-  logoTargetY = mouse.y * 0.2;
-  logoTargetRotation = mouse.x * 0.15;
-  logoTargetScale = 1 + Math.abs(mouse.x) * 0.08;
+function animate(time) {
+  const t = time * 0.001;
 
-  logo.position.x += (logoTargetX - logo.position.x) * ease;
-  logo.position.y += (logoTargetY - logo.position.y) * ease;
-  logo.rotation.z += (logoTargetRotation - logo.rotation.z) * ease;
-
-  logo.scale.x += (logoTargetScale - logo.scale.x) * ease;
-  logo.scale.y += (logoTargetScale - logo.scale.y) * ease;
-
-  // Movimento sutil do campo de estrelas
-  stars.rotation.y += 0.0008;
-  stars.rotation.x += 0.0003;
-
-  // Parallax com mouse
-  stars.rotation.y += (mouse.x * 0.003);
-  stars.rotation.x += (mouse.y * 0.002);
-
-  renderer.render(scene, camera);
-}
-
-renderer.setAnimationLoop(animate);
-
-// ======================
-// RESIZE
-// ======================
-window.addEventListener('resize', () => {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-});
+  // logo reage ao aparelho / mouse
+  logoTargetX = input.x * 0.35;
+  logoTargetY = input.y * 0.22;
+  logoTargetRotation = input.x * 0.18

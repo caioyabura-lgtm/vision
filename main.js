@@ -19,11 +19,11 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setClearColor(0x04060b);
 document.body.appendChild(renderer.domElement);
 
-// TEXTURA
+// TEXTURA DA LOGO
 const textureLoader = new THREE.TextureLoader();
 const eyeTexture = textureLoader.load('./olho.png');
 
-// LOGO CENTRAL
+// LOGO FIXA NO CENTRO
 const eyeMaterial = new THREE.MeshBasicMaterial({
   map: eyeTexture,
   transparent: true
@@ -33,20 +33,8 @@ const eyeGeometry = new THREE.PlaneGeometry(2.2, 2.2);
 const eye = new THREE.Mesh(eyeGeometry, eyeMaterial);
 scene.add(eye);
 
-// GLOW CIRCULAR SUAVE
-const glowGeometry = new THREE.CircleGeometry(1.4, 64);
-const glowMaterial = new THREE.MeshBasicMaterial({
-  color: 0x88aaff,
-  transparent: true,
-  opacity: 0.08,
-  depthWrite: false
-});
-const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-glow.position.z = -0.05;
-scene.add(glow);
-
 // ESTRELAS
-const starCount = 1000;
+const starCount = 1200;
 const starGeometry = new THREE.BufferGeometry();
 const starPositions = new Float32Array(starCount * 3);
 
@@ -97,38 +85,30 @@ window.addEventListener(
 );
 
 // ANIMAÇÃO
-const ease = 0.12;
+const ease = 0.08;
 
-let targetX = 0;
-let targetY = 0;
-let targetRot = 0;
+let starTargetRotX = 0;
+let starTargetRotY = 0;
+let starTargetPosX = 0;
+let starTargetPosY = 0;
 
-function animate(time) {
-  const t = time * 0.001;
+function animate() {
+  // estrelas reagem ao input
+  starTargetRotY = input.x * 0.35;
+  starTargetRotX = input.y * 0.2;
 
-  // resposta mais forte
-  targetX = input.x * 0.75;
-  targetY = input.y * 0.45;
-  targetRot = input.x * 0.35;
+  starTargetPosX = input.x * 0.4;
+  starTargetPosY = input.y * 0.25;
 
-  eye.position.x += (targetX - eye.position.x) * ease;
-  eye.position.y += (targetY - eye.position.y) * ease;
-  eye.rotation.z += (targetRot - eye.rotation.z) * ease;
+  stars.rotation.y += (starTargetRotY - stars.rotation.y) * ease;
+  stars.rotation.x += (starTargetRotX - stars.rotation.x) * ease;
 
-  // movimento autônomo sutil
-  eye.rotation.z += 0.0015;
+  stars.position.x += (starTargetPosX - stars.position.x) * ease;
+  stars.position.y += (starTargetPosY - stars.position.y) * ease;
 
-  glow.position.x = eye.position.x;
-  glow.position.y = eye.position.y;
-  glow.rotation.z = eye.rotation.z;
-  glow.scale.x = 1 + Math.sin(t * 1.2) * 0.04;
-  glow.scale.y = 1 + Math.sin(t * 1.2) * 0.04;
-  glow.material.opacity = 0.07 + Math.sin(t * 1.4) * 0.02;
-
-  stars.rotation.y += 0.0004;
-  stars.rotation.x += 0.00015;
-  stars.rotation.y += input.x * 0.0008;
-  stars.rotation.x += input.y * 0.0005;
+  // leve movimento autônomo das estrelas
+  stars.rotation.y += 0.0008;
+  stars.rotation.x += 0.0002;
 
   renderer.render(scene, camera);
 }

@@ -11,7 +11,7 @@ img.style.transform = 'translate(-50%, -50%)';
 document.body.appendChild(img);
 
 const msg = document.createElement('div');
-msg.textContent = 'Teste logo.png';
+msg.textContent = 'Teste olho.png';
 msg.style.position = 'fixed';
 msg.style.top = '20px';
 msg.style.left = '20px';
